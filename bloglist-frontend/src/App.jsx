@@ -78,7 +78,6 @@ const App = () => {
 	}
 
 	const handleCreate = async (newBlog) => {
-		event.preventDefault()
 		
 		if (!newBlog.title || !newBlog.author || !newBlog.url) {
   			showNotification('fill all fields', 'error')
@@ -96,6 +95,18 @@ const App = () => {
 		catch (error) {
 			showNotification('error creating blog', 'error')
 		}
+	}
+
+	const handleLike = async (blog) => {
+		const updatedBlog = {
+			...blog,
+			likes: blog.likes + 1,
+			user: blog.user.id
+		}
+
+		const returnedBlog = await blogService.update(blog.id, updatedBlog)
+		setBlogs(prev => prev.map(b => b.id !== blog.id ? b : returnedBlog))
+		console.log('UPDATED BLOG RETURNED:', returnedBlog)
 	}
 
 	if (user === null) {
@@ -137,9 +148,9 @@ const App = () => {
 			<Togglable buttonLabel="create new blog" ref={blogFormRef}>
 				<BlogForm createBlog={handleCreate} />
 			</Togglable>
-			
+
 			{blogs.map(blog =>
-				<Blog key={blog.id} blog={blog} />
+				<Blog key={blog.id} blog={blog} handleLike={handleLike} />
 			)}
 		</div>
 	)
