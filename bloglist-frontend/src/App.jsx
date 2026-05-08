@@ -21,7 +21,7 @@ const App = () => {
   	useEffect(() => {
     	blogService.getAll().then(blogs =>
     	  	setBlogs( blogs )
-    	)  
+    	)
   	}, [])
 
 	useEffect(() => {
@@ -50,9 +50,9 @@ const App = () => {
 			const user = await loginService.login({
 				username, password,
 			})
-			
+
 			setUser(user)
-			
+
 			blogService.setToken(user.token)
 
 			window.localStorage.setItem(
@@ -64,8 +64,8 @@ const App = () => {
 			setPassword('')
 
 			showNotification(`logged in ${user.name}`, 'success')
-		} 
-		catch (error) {
+		}
+		catch {
 			showNotification('wrong username or password', 'error')
 		}
 	}
@@ -78,7 +78,7 @@ const App = () => {
 	}
 
 	const handleCreate = async (newBlog) => {
-		
+
 		if (!newBlog.title || !newBlog.author || !newBlog.url) {
   			showNotification('fill all fields', 'error')
   			return
@@ -86,13 +86,23 @@ const App = () => {
 
 		try {
 			const returnedBlog = await blogService.create(newBlog)
-			setBlogs(blogs.concat(returnedBlog))
-			
+
+			const blogWithUser = {
+				...returnedBlog,
+				user: {
+					id: user.id,
+					username: user.username,
+					name: user.name
+				}
+			}
+
+			setBlogs(prevBlogs => prevBlogs.concat(blogWithUser))
+
 			blogFormRef.current.toggleVisibility()
 
 			showNotification(`a new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success')
 		}
-		catch (error) {
+		catch {
 			showNotification('error creating blog', 'error')
 		}
 	}
@@ -107,6 +117,22 @@ const App = () => {
 		const returnedBlog = await blogService.update(blog.id, updatedBlog)
 		setBlogs(prev => prev.map(b => b.id !== blog.id ? b : returnedBlog))
 		console.log('UPDATED BLOG RETURNED:', returnedBlog)
+	}
+
+	const handleDelete = async (blog) => {
+		const confirmDelete = window.confirm(`Remove blog ${blog.title} by ${blog.author}?`)
+		if (!confirmDelete) {
+			return
+		}
+		try {
+			await blogService.remove(blog.id)
+
+			setBlogs(blogs.filter(b => b.id !== blog.id))
+			showNotification(`´Deleted ${blog.title} by ${blog.author}`, 'success')
+		}
+		catch {
+			showNotification('error deleting blog', 'error')
+		}
 	}
 
 	if (user === null) {
@@ -150,7 +176,7 @@ const App = () => {
 			</Togglable>
 
 			{blogs.sort((a, b) => b.likes - a.likes).map(blog =>
-				<Blog key={blog.id} blog={blog} handleLike={handleLike} />
+				<Blog key={blog.id} blog={blog} handleLike={handleLike} handleDelete={handleDelete} user={user} />
 			)}
 		</div>
 	)
