@@ -2,6 +2,7 @@ import { test, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Blog from './Blog'
+import BlogForm from './Blogform'
 
 const blog = {
     title: 'Testjsx Blog',
@@ -54,4 +55,29 @@ test('calls handleLike twice when like button is clicked twice', async () => {
     await userEv.click(likeButton)
 
     expect(handleLike).toHaveBeenCalledTimes(2)
+})
+test('calls createBlog with correct details when form is submitted', async () => {
+    const userEv = userEvent.setup()
+    const createBlog = vi.fn()
+    render(<BlogForm createBlog={createBlog} />)
+    
+    const inputs = screen.getAllByRole('textbox')
+    
+    const titleInput = inputs[0]
+    const authorInput = inputs[1]
+    const urlInput = inputs[2]
+
+    const submitButton = screen.getByText('create')
+
+    await userEv.type(titleInput, 'Jsx createtester blog')
+    await userEv.type(authorInput, 'Jsx createtester')
+    await userEv.type(urlInput, 'http://jsxcreatetesterblog.com')
+    await userEv.click(submitButton)
+
+    expect(createBlog).toHaveBeenCalledTimes(1)
+    expect(createBlog).toHaveBeenCalledWith({
+        title: 'Jsx createtester blog',
+        author: 'Jsx createtester',
+        url: 'http://jsxcreatetesterblog.com'
+    })
 })
